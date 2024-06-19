@@ -36,10 +36,13 @@ func ProducerMsg(broders []string, topic string, clientid string, MSG *chan []by
 }
 
 // 消费者
-func ConsumerMsg(broders []string, topic string, groupid string, MSG *chan []byte) {
+func ConsumerMsg(broders []string, topic string, groupid string, clientid string, MSG *chan []byte) {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true                  // 启用错误返回
 	config.Consumer.Offsets.Initial = sarama.OffsetOldest // 默认从最新消息开始消费
+	if clientid != "" {
+		config.ClientID = clientid
+	}
 	group, err := sarama.NewConsumerGroup(broders, groupid, config)
 	if err != nil {
 		log.Fatalln("Failed to start Sarama consumer:", err)
