@@ -1,4 +1,4 @@
-module kafkaclient
+module github.com/zhoujubhong/kafkaclient
 
 go 1.22.4
 
