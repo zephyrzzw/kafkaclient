@@ -22,16 +22,34 @@ func ProducerMsg(broders []string, topic string, clientid string, MSG *chan []by
 	}
 	defer producer.Close()
 	for {
-		select {
-		case msg := <-*MSG: // 读取消息
-			Msg := &sarama.ProducerMessage{
-				Topic: topic,
-				Value: sarama.StringEncoder(msg),
+		if len(*MSG) < 100 {
+			select {
+			case msg := <-*MSG: // 读取消息
+				Msg := &sarama.ProducerMessage{
+					Topic: topic,
+					Value: sarama.StringEncoder(msg),
+				}
+				if _, _, err := producer.SendMessage(Msg); err != nil {
+					log.Println("Failed to write message:", err)
+				}
 			}
-			if _, _, err := producer.SendMessage(Msg); err != nil {
+		} else {
+			var msgs = make([]*sarama.ProducerMessage, 0, 100) // 批量写入
+			for i := 0; i < 100; i++ {
+				select {
+				case msg := <-*MSG:
+					Msg := &sarama.ProducerMessage{
+						Topic: topic,
+						Value: sarama.StringEncoder(msg),
+					}
+					msgs = append(msgs, Msg)
+				}
+			}
+			if err = producer.SendMessages(msgs); err != nil {
 				log.Println("Failed to write message:", err)
 			}
 		}
+
 	}
 }
 
